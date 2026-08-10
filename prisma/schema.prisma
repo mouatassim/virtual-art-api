@@ -1,0 +1,203 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// =========================================
+// 1. USER (artist account)
+// =========================================
+
+model User {
+  id        String  @id @default(cuid())
+  email     String  @unique
+  firstName String?
+  lastName  String?
+
+  hashedPassword String
+
+  bio       String?
+  website   String?
+  contact   String?
+  avatarUrl String?
+  locale    String? @default("en")
+
+  isActive                 Boolean   @default(false)
+  activationToken          String?   @unique
+  activationTokenExpiresAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  expos Expo[]
+}
+
+// =========================================
+// 2. EXPO (virtual exhibition)
+// =========================================
+
+model Expo {
+  id       String  @id @default(cuid())
+  title    String
+  subtitle String?
+
+  // Room dimensions (metres)
+  roomWidth  Float @default(24)
+  roomDepth  Float @default(16)
+  roomHeight Float @default(4.4)
+
+  // Partition wall (all null = no partition)
+  partitionLength    Float?
+  partitionThickness Float?
+  partitionHeight    Float?
+
+  // Room colours
+  wallColor    String @default("#f1eee8")
+  floorColor   String @default("#8f8a83")
+  ceilingColor String @default("#e9e6e0")
+  floorGloss   Float  @default(0.55)
+
+  // Player spawn
+  spawnX       Float @default(0)
+  spawnZ       Float @default(6.4)
+  spawnHeading Float @default(0)
+  eyeHeight    Float @default(1.62)
+  tourDwell    Int   @default(9)
+
+  // Frame defaults
+  frameColor     String @default("#1b1a19")
+  frameWidth     Float  @default(0.045)
+  frameDepth     Float  @default(0.05)
+  frameMat       Float  @default(0.08)
+  frameMetalness Float  @default(0.1)
+  frameRoughness Float  @default(0.55)
+
+  isPublished Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  artworks Artwork[]
+  benches  Bench[]
+}
+
+// =========================================
+// 3. ARTWORK (painting or sculpture)
+// =========================================
+
+enum ArtworkType {
+  PAINTING
+  SCULPTURE
+}
+
+enum WallId {
+  NORTH
+  SOUTH
+  EAST
+  WEST
+  CENTER_NORTH
+  CENTER_SOUTH
+}
+
+enum ProceduralStyle {
+  COLOR_FIELD
+  BAUHAUS
+  FLOW
+  ORBITS
+  HORIZON
+  GRID
+  STRATA
+}
+
+enum SculptureShape {
+  KNOT
+  MONOLITH
+  SPHERES
+}
+
+model Artwork {
+  id   String      @id @default(cuid())
+  slug String
+  type ArtworkType @default(PAINTING)
+
+  // Common fields
+  title       String
+  artist      String
+  year        String?
+  medium      String?
+  dimensions  String?
+  description String?
+  price       String?
+  link        String?
+
+  // Painting placement
+  wall    WallId?
+  offset  Float?
+  centerY Float?
+  width   Float?
+  height  Float?
+  imageUrl String?
+
+  // Procedural generation (painting)
+  proceduralStyle   ProceduralStyle?
+  proceduralSeed    Int?
+  proceduralPalette String[]
+
+  // Frame overrides (null = use expo defaults)
+  frameColorOverride     String?
+  frameWidthOverride     Float?
+  frameDepthOverride     Float?
+  frameMatOverride       Float?
+  frameMetalnessOverride Float?
+  frameRoughnessOverride Float?
+
+  // Sculpture placement
+  positionX Float?
+  positionZ Float?
+  modelUrl  String?
+  shape     SculptureShape?
+  scale     Float?
+
+  // Sculpture material
+  materialColor     String?
+  materialMetalness Float?
+  materialRoughness Float?
+
+  // Sculpture plinth
+  plinthWidth  Float?
+  plinthHeight Float?
+
+  sortOrder Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  expoId String
+  expo   Expo   @relation(fields: [expoId], references: [id], onDelete: Cascade)
+
+  @@unique([expoId, slug])
+}
+
+// =========================================
+// 4. BENCH
+// =========================================
+
+model Bench {
+  id        String   @id @default(cuid())
+  positionX Float
+  positionZ Float
+  rotation  Float?
+  length    Float?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  expoId String
+  expo   Expo   @relation(fields: [expoId], references: [id], onDelete: Cascade)
+}
