@@ -5,7 +5,10 @@ import {
   createExpo,
   updateExpo,
   deleteExpo,
+  getPublishedExpoConfig,
+  getExpoFullConfig,
 } from "./expo.service";
+import { getCookie } from "../../utils/cookies";
 import type { CreateExpoInput, UpdateExpoInput } from "./expo.schemas";
 
 export async function listExposHandler(
@@ -50,5 +53,31 @@ export async function deleteExpoHandler(
   reply: FastifyReply,
 ) {
   const result = await deleteExpo(request.params.expoId, request.user.userId);
+  return reply.code(200).send(result);
+}
+
+export async function publishedExpoConfigHandler(
+  _request: FastifyRequest,
+  reply: FastifyReply,
+) {
+  const result = await getPublishedExpoConfig();
+  return reply.code(200).send(result);
+}
+
+export async function fullExpoConfigHandler(
+  request: FastifyRequest<{ Params: { expoId: string } }>,
+  reply: FastifyReply,
+) {
+  let userId: string | undefined;
+  try {
+    const token = getCookie(request.headers.cookie, "access_token");
+    if (token) {
+      const payload = (await request.jwt.verify(token)) as { userId: string };
+      userId = payload.userId;
+    }
+  } catch {
+    // treat as unauthenticated
+  }
+  const result = await getExpoFullConfig(request.params.expoId, userId);
   return reply.code(200).send(result);
 }

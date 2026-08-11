@@ -2,6 +2,7 @@ import { prisma } from "../../utils/prisma";
 import { ForbiddenError, NotFoundError } from "../../utils/errors";
 import type { CreateExpoInput, UpdateExpoInput } from "./expo.schemas";
 import { mapExpoRow } from "./expo.mapper";
+import { mapExpoToConfig } from "./expo.config-mapper";
 
 // ─── List user's expos ─────────────────────────────────────────────────────────
 
@@ -132,6 +133,47 @@ export async function deleteExpo(expoId: string, userId: string) {
   await assertExpoOwnership(expoId, userId);
   await prisma.expo.delete({ where: { id: expoId } });
   return { message: "Expo deleted successfully." };
+}
+
+// ─── Published expo full config ────────────────────────────────────────────────
+
+export async function getPublishedExpoConfig() {
+  const expo = await prisma.expo.findFirst({
+    where: { isPublished: true },
+    orderBy: { createdAt: "asc" },
+    include: {
+      user: true,
+      artworks: { orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }] },
+      benches: { orderBy: { createdAt: "asc" } },
+    },
+  });
+
+  if (!expo) throw new NotFoundError("No published expo found.");
+
+  const { user, artworks, benches, ...expoRow } = expo;
+  return { config: mapExpoToConfig(expoRow, user, artworks, benches) };
+}
+
+// ─── Single expo full config (optional auth) ───────────────────────────────────
+
+export async function getExpoFullConfig(expoId: string, userId?: string) {
+  const expo = await prisma.expo.findUnique({
+    where: { id: expoId },
+    include: {
+      user: true,
+      artworks: { orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }] },
+      benches: { orderBy: { createdAt: "asc" } },
+    },
+  });
+
+  if (!expo) throw new NotFoundError("Expo not found.");
+
+  if (!expo.isPublished && expo.userId !== userId) {
+    throw new NotFoundError("Expo not found.");
+  }
+
+  const { user, artworks, benches, ...expoRow } = expo;
+  return { config: mapExpoToConfig(expoRow, user, artworks, benches) };
 }
 
 // ─── Ownership guard ───────────────────────────────────────────────────────────

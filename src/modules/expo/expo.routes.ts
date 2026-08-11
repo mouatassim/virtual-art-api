@@ -5,10 +5,21 @@ import {
   createExpoHandler,
   updateExpoHandler,
   deleteExpoHandler,
+  publishedExpoConfigHandler,
+  fullExpoConfigHandler,
 } from "./expo.controller";
 import { $ref } from "./expo.schemas";
 
 export default async function expoRoutes(app: FastifyInstance) {
+  // GET /api/expos/published — full ExpoConfig of the first published expo (public)
+  app.get("/published", {
+    schema: {
+      tags: ["Expos"],
+      summary: "Get the first published expo's full config (public)",
+    },
+    handler: publishedExpoConfigHandler,
+  });
+
   // GET /api/expos — list authenticated user's expos
   app.get("/", {
     schema: {
@@ -62,5 +73,14 @@ export default async function expoRoutes(app: FastifyInstance) {
     },
     preHandler: [app.authenticate],
     handler: deleteExpoHandler,
+  });
+
+  // GET /api/expos/:expoId/full — full ExpoConfig (public if published, owner if not)
+  app.get("/:expoId/full", {
+    schema: {
+      tags: ["Expos"],
+      summary: "Get a specific expo's full config with artworks and benches",
+    },
+    handler: fullExpoConfigHandler,
   });
 }
