@@ -25,6 +25,23 @@ async function main() {
   });
 
   console.log(`Demo user: ${user.email} (id: ${user.id})`);
+
+  const existingExpo = await prisma.expo.findFirst({ where: { userId: user.id } });
+  if (!existingExpo) {
+    const expo = await prisma.expo.create({
+      data: {
+        userId: user.id,
+        title: "Open Walls",
+        subtitle: "A virtual exhibition",
+        isPublished: true,
+        partitionLength: 8,
+        partitionThickness: 0.3,
+        partitionHeight: 3.4,
+      },
+    });
+    console.log(`Demo expo created (id: ${expo.id})`);
+  }
+
   console.log("Seed complete.");
 }
 
