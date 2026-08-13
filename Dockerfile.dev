@@ -8,4 +8,4 @@ RUN npm install --legacy-peer-deps
 COPY . .
 
 EXPOSE 3010
-CMD ["npm", "start"]
+CMD ["sh", "-c", "npx prisma db push && npm run seed && npm start"]
