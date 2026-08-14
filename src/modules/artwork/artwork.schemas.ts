@@ -160,5 +160,5 @@ export const { schemas: artworkSchemas, $ref } = buildJsonSchemas(
     updateArtworkResponseSchema,
     listArtworksResponseSchema,
   },
-  { $id: "ArtworkSchemas" },
+  { target: "jsonSchema7", $id: "ArtworkSchemas" },
 );

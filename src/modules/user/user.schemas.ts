@@ -39,5 +39,5 @@ export const { schemas: userSchemas, $ref } = buildJsonSchemas(
     updateProfileSchema,
     updateProfileResponseSchema,
   },
-  { $id: "UserSchemas" },
+  { target: "jsonSchema7", $id: "UserSchemas" },
 );

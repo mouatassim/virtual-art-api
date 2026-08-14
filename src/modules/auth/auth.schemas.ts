@@ -99,5 +99,5 @@ export const { schemas: authSchemas, $ref } = buildJsonSchemas(
     logoutResponseSchema,
     meResponseSchema,
   },
-  { $id: "AuthSchemas" },
+  { target: "jsonSchema7", $id: "AuthSchemas" },
 );

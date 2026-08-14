@@ -44,5 +44,5 @@ export const { schemas: benchSchemas, $ref } = buildJsonSchemas(
     updateBenchResponseSchema,
     listBenchesResponseSchema,
   },
-  { $id: "BenchSchemas" },
+  { target: "jsonSchema7", $id: "BenchSchemas" },
 );

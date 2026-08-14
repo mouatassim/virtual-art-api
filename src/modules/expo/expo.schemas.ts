@@ -104,5 +104,5 @@ export const { schemas: expoSchemas, $ref } = buildJsonSchemas(
     listExposResponseSchema,
     getExpoResponseSchema,
   },
-  { $id: "ExpoSchemas" },
+  { target: "jsonSchema7", $id: "ExpoSchemas" },
 );
