@@ -4,6 +4,9 @@ import multipart from "@fastify/multipart";
 import swagger from "@fastify/swagger";
 import swaggerUI from "@fastify/swagger-ui";
 import fastifyJwt from "fastify-jwt";
+import fs from "fs";
+import path from "path";
+import { pipeline } from "stream/promises";
 
 import { authSchemas } from "./modules/auth/auth.schemas";
 import { expoSchemas } from "./modules/expo/expo.schemas";
@@ -153,6 +156,33 @@ function buildServer() {
   });
 
   app.get("/healthcheck", async () => ({ status: "OK" }));
+
+  // POST /api/upload — upload an artwork image (authenticated, images only, max 20 MB)
+  app.post(
+    "/upload",
+    { preHandler: [app.authenticate] },
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      const data = await request.file({ limits: { fileSize: 20 * 1024 * 1024 } });
+      if (!data) {
+        return reply.code(400).send({ message: "No file provided." });
+      }
+
+      const allowed = ["image/jpeg", "image/png", "image/webp", "image/gif", "image/svg+xml"];
+      if (!allowed.includes(data.mimetype)) {
+        return reply.code(415).send({ message: "Only image files are accepted." });
+      }
+
+      const ext = path.extname(data.filename).toLowerCase() || ".jpg";
+      const filename = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}${ext}`;
+      const uploadDir = process.env.UPLOAD_DIR ?? "/app/uploads";
+
+      if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+
+      await pipeline(data.file, fs.createWriteStream(path.join(uploadDir, filename)));
+
+      return reply.code(201).send({ url: `/art/${filename}` });
+    },
+  );
 
   // Register schemas
   for (const schema of [
