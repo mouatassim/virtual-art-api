@@ -159,7 +159,7 @@ function buildServer() {
 
   // POST /api/upload — upload an artwork image (authenticated, images only, max 20 MB)
   app.post(
-    "/upload",
+    "/api/upload",
     { preHandler: [app.authenticate] },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const data = await request.file({ limits: { fileSize: 20 * 1024 * 1024 } });
